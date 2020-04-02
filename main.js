@@ -57,7 +57,17 @@ class point{
 }
 
 function house(x, y, z){
-    let houseMesh = [];
+    let width = rand(30, 80);
+    let length = rand(50, 150);
+    let height = rand(20, 50);
+    console.log(x, y, z);
+    
+    meshes.push(new mesh([new point(x - width/2, y - length/2, 0), new point(x + width/2, y - length/2, 0), new point(x + width/2, y - length/2, height), new point(x - width/2, y - length/2, height)], "#696969", 1),
+                new mesh([new point(x - width/2, y - length/2, 0), new point(x - width/2, y + length/2, 0), new point(x - width/2, y + length/2, height), new point(x - width/2, y - length/2, height)], "#595959", -1),
+                new mesh([new point(x + width/2, y - length/2, 0), new point(x + width/2, y + length/2, 0), new point(x + width/2, y + length/2, height), new point(x + width/2, y - length/2, height)], "grey", 1),
+                new mesh([new point(x - width/2, y + length/2, 0), new point(x + width/2, y + length/2, 0), new point(x + width/2, y + length/2, height), new point(x - width/2, y + length/2, height)], "#969696", -1),
+                new mesh([new point(x - width/2, y - length/2, height), new point(x + width/2, y - length/2, height), new point(x + width/2, y + length/2, height), new point(x - width/2, y + length/2, height)], "#a8a8a8", 1),
+    );
     
 }
 
@@ -70,10 +80,10 @@ function draw(){
     mainCam.x += Math.sin(-mainCam.rz) * mover[1] * mainCam.speed + Math.cos(mainCam.rz) * mover[0] * mainCam.speed;
     mainCam.y += Math.sin(mainCam.rz) * mover[0] * mainCam.speed + Math.cos(-mainCam.rz) * mover[1] * mainCam.speed;
     mainCam.z += mover[2] * mainCam.speed;
-    for(mesh of meshes){
+    for(m of meshes){
         ctx.beginPath();
-        for(i = 0; i < mesh.points.length; i++){
-            let point = mesh.points[i];
+        for(i = 0; i < m.points.length; i++){
+            let point = m.points[i];
             /*
             let d1 = multiply(delta, [[1, 0, 0], [0, Math.cos(mainCam.rx), -Math.sin(mainCam.rx)], [0, Math.sin(mainCam.rx), Math.cos(mainCam.rx)]]);
             console.log(d1);
@@ -96,13 +106,13 @@ function draw(){
             }
 
         }
-        let dxs = [[mesh.points[1].x - mesh.points[0].x, mesh.points[1].y - mesh.points[0].y, mesh.points[1].z - mesh.points[0].z],
-                    [mesh.points[2].x - mesh.points[0].x, mesh.points[2].y - mesh.points[0].y, mesh.points[2].z - mesh.points[0].z],
-                    [mainCam.x - mesh.points[0].x, mainCam.y - mesh.points[0].y, mainCam.z - mesh.points[0].z]];
+        let dxs = [[m.points[1].x - m.points[0].x, m.points[1].y - m.points[0].y, m.points[1].z - m.points[0].z],
+                    [m.points[2].x - m.points[0].x, m.points[2].y - m.points[0].y, m.points[2].z - m.points[0].z],
+                    [mainCam.x - m.points[0].x, mainCam.y - m.points[0].y, mainCam.z - m.points[0].z]];
         let det = dxs[0][0]*dxs[1][1]*dxs[2][2] + dxs[0][1]*dxs[1][2]*dxs[2][0] + dxs[0][2]*dxs[1][0]*dxs[2][1] - dxs[0][2]*dxs[1][1]*dxs[2][0] - dxs[0][1]*dxs[1][0]*dxs[2][2] - dxs[0][0]*dxs[1][2]*dxs[2][1];
 
-        if(det * mesh.normal > 0){
-            ctx.fillStyle = mesh.color;
+        if(det * m.normal > 0){
+            ctx.fillStyle = m.color;
             ctx.fill();
         }
         else{
@@ -223,8 +233,21 @@ window.addEventListener("keyup", (e) => {
     }
 })
 
+let locked = false;
+
 ui.onclick = () => {
-    ui.requestPointerLock();
+    if(locked){
+        let cx = Math.tan(mainCam.rx) * mainCam.z * Math.sin(-mainCam.rz);
+        let cy = Math.tan(mainCam.rx) * mainCam.z * Math.cos(-mainCam.rz);
+        
+        if(cx < rdist * chunkSize && cy < rdist * chunkSize){
+            house(cx + mainCam.x, cy + mainCam.y, 0);
+        }
+    }
+    else{
+        ui.requestPointerLock();
+    }
+
 }
 
 document.addEventListener('pointerlockchange', lockChangeAlert, false);
@@ -233,9 +256,12 @@ document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
 function lockChangeAlert() {
     if (document.pointerLockElement === ui ||
         document.mozPointerLockElement === ui) {
-      document.addEventListener("mousemove", updatePosition, false);
-    } else {
-      document.removeEventListener("mousemove", updatePosition, false);
+        locked = true; 
+        document.addEventListener("mousemove", updatePosition, false);
+    } 
+    else {
+        locked = false;
+        document.removeEventListener("mousemove", updatePosition, false);
     }
 }
 
